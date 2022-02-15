@@ -1,0 +1,75 @@
+package uz.pdp.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import uz.pdp.entity.Category;
+import uz.pdp.payload.CategoryDto;
+import uz.pdp.payload.Result;
+import uz.pdp.service.CategoryService;
+
+@RestController
+@RequestMapping(value = "/category")
+public class CategoryController {
+
+	@Autowired
+	CategoryService categoryService;
+	
+	@PostMapping
+	public HttpEntity<?> saveCategory(@Valid @RequestBody CategoryDto categoryDto){
+		Result result = categoryService.saveCategory(categoryDto);
+		return ResponseEntity.status(result.isSuccess()?HttpStatus.OK: HttpStatus.BAD_REQUEST).body(result);
+	}
+	@GetMapping
+	public HttpEntity<?> geCategories(){
+		List<Category> categories = categoryService.getCategoryes();
+		return ResponseEntity.status(categories.isEmpty()?HttpStatus.NOT_FOUND:HttpStatus.OK).body(categories);
+	}
+	@GetMapping(value = "/{id}")
+	public HttpEntity<?> getCategory(@PathVariable Integer id) {
+		Result result = categoryService.getCategory(id);
+		return ResponseEntity.status(result.isSuccess()?HttpStatus.OK:HttpStatus.NOT_FOUND).body(result);
+	}
+	@PutMapping(value = "/{id}")
+	public HttpEntity<?> editCategory(@PathVariable Integer id, @Valid @RequestBody CategoryDto categoryDto) {
+		Result result = categoryService.editCategory(id, categoryDto);
+		return ResponseEntity.status(result.isSuccess()?HttpStatus.OK:HttpStatus.NOT_FOUND).body(result);
+	}
+	@DeleteMapping(value = "/{id}")
+	public HttpEntity<?> deleteCategory(@PathVariable Integer id) {
+		Result result = categoryService.delteCategory(id);
+		return ResponseEntity.status(result.isSuccess()?HttpStatus.OK:HttpStatus.NOT_FOUND).body(result);
+	}
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public Map<String, String> handleValidationExceptions(
+	  MethodArgumentNotValidException ex) {
+	    Map<String, String> errors = new HashMap<>();
+	    ex.getBindingResult().getAllErrors().forEach((error) -> {
+	        String fieldName = ((FieldError) error).getField();
+	        String errorMessage = error.getDefaultMessage();
+	        errors.put(fieldName, errorMessage);
+	    });
+	    return errors;
+	}
+}
